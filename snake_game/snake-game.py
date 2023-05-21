@@ -1,116 +1,130 @@
-import pygame as pg
+import turtle
 import random
-
-pg.init()
-
-white = (255,255,255)
-red = (255,0,0)
-black = (0,0,0)
-
-screenWidth = 900
-screenHeight = 600
-gameWindow = pg.display.set_mode((screenWidth,screenHeight))
-
-pg.display.set_caption('Snake Game')
-pg.display.update()
-clock = pg.time.Clock()
-font = pg.font.SysFont(None,55)
-
-def textScreen(text,color,x,y):
-    screenText = font.render(text,True,color)
-    gameWindow.blit(screenText,[x,y])
-
-def plotSnake(gameWindow,color,snakeList,snakeSize):
-    for x,y in snakeList:
-        pg.draw.rect(gameWindow, color, [x,y,snakeSize,snakeSize])
-
-
-def gameLoop():
-    exitGame = False
-    gameOver = False
-    snakeX = 45
-    snakeY = 55
-    velocityX = 0
-    velocityY = 0
-    snakeList = []
-    snakeLength = 1
-
-    foodX = random.randint(20, screenWidth-20)
-    foodY = random.randint(60, screenHeight-20)
-    score = 0
-    initialVelocity = 4
-    snakeSize = 30
-    fps = 60
-
-    while not exitGame:
-        if gameOver:
-            gameWindow.fill(white)
-            textScreen('Game Over! Press Enter To Continue',red,100,250)
-
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    exitGame = True
-
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_RETURN:
-                        gameLoop()
-
-        else:
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    exitGame = True
-
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_RIGHT:
-                        velocityX = initialVelocity
-                        velocityY = 0 
-
-                    if event.key == pg.K_LEFT:
-                        velocityX = -initialVelocity
-                        velocityY = 0 
-                    
-                    if event.key == pg.K_UP:
-                        velocityY = -initialVelocity
-                        velocityX = 0 
-
-                    if event.key == pg.K_DOWN:
-                        velocityY = initialVelocity
-                        velocityX = 0 
-
-            snakeX = snakeX + velocityX
-            snakeY = snakeY + velocityY
-
-            if abs(snakeX - foodX) < 10 and abs(snakeY - foodY) < 10:
-                score += 1
-                foodX = random.randint(20, screenWidth-30)
-                foodY = random.randint(60, screenHeight-30)
-                snakeLength += 5 
-
-            gameWindow.fill(white)
-            textScreen("Score : " + str(score*10), red, 5, 5)
-            pg.draw.rect(gameWindow, red, [foodX, foodY, snakeSize, snakeSize])
-            pg.draw.line(gameWindow, red, (0,40), (900,40), 5)
-
-            head = []
-            head.append(snakeX)
-            head.append(snakeY)
-            snakeList.append(head)
-
-            if len(snakeList) > snakeLength:
-                del snakeList[0]
-
-            if head in snakeList[:-1]:
-                gameOver = True
-
-            if snakeX < 0 or snakeX > screenWidth-20 or snakeY < 50 or snakeY > screenHeight-20:
-                gameOver = True
-
-            plotSnake(gameWindow, black, snakeList, snakeSize)
-
-        pg.display.update()
-        clock.tick(fps)
-
-    pg.quit()
-    quit()
-
-gameLoop()
+ 
+w = 500
+h = 500
+food_size = 10
+delay = 100
+ 
+offsets = {
+    "up": (0, 20),
+    "down": (0, -20),
+    "left": (-20, 0),
+    "right": (20, 0)
+}
+ 
+def reset():
+    global snake, snake_dir, food_position, pen
+    snake = [[0, 0], [0, 20], [0, 40], [0, 60], [0, 80]]
+    snake_dir = "up"
+    food_position = get_random_food_position()
+    food.goto(food_position)
+    move_snake()
+     
+def move_snake():
+    global snake_dir
+ 
+    new_head = snake[-1].copy()
+    new_head[0] = snake[-1][0] + offsets[snake_dir][0]
+    new_head[1] = snake[-1][1] + offsets[snake_dir][1]
+ 
+     
+    if new_head in snake[:-1]:
+        reset()
+    else:
+        snake.append(new_head)
+ 
+     
+        if not food_collision():
+            snake.pop(0)
+ 
+ 
+        if snake[-1][0] > w / 2:
+            snake[-1][0] -= w
+        elif snake[-1][0] < - w / 2:
+            snake[-1][0] += w
+        elif snake[-1][1] > h / 2:
+            snake[-1][1] -= h
+        elif snake[-1][1] < -h / 2:
+            snake[-1][1] += h
+ 
+ 
+        pen.clearstamps()
+ 
+         
+        for segment in snake:
+            pen.goto(segment[0], segment[1])
+            pen.stamp()
+ 
+         
+        screen.update()
+ 
+        turtle.ontimer(move_snake, delay)
+ 
+def food_collision():
+    global food_position
+    if get_distance(snake[-1], food_position) < 20:
+        food_position = get_random_food_position()
+        food.goto(food_position)
+        return True
+    return False
+ 
+def get_random_food_position():
+    x = random.randint(- w / 2 + food_size, w / 2 - food_size)
+    y = random.randint(- h / 2 + food_size, h / 2 - food_size)
+    return (x, y)
+ 
+def get_distance(pos1, pos2):
+    x1, y1 = pos1
+    x2, y2 = pos2
+    distance = ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
+    return distance
+def go_up():
+    global snake_dir
+    if snake_dir != "down":
+        snake_dir = "up"
+ 
+def go_right():
+    global snake_dir
+    if snake_dir != "left":
+        snake_dir = "right"
+ 
+def go_down():
+    global snake_dir
+    if snake_dir!= "up":
+        snake_dir = "down"
+ 
+def go_left():
+    global snake_dir
+    if snake_dir != "right":
+        snake_dir = "left"
+ 
+ 
+screen = turtle.Screen()
+screen.setup(w, h)
+screen.title("Snake")
+screen.bgcolor("grey")
+screen.setup(500, 500)
+screen.tracer(0)
+ 
+ 
+pen = turtle.Turtle("square")
+pen.penup()
+ 
+ 
+food = turtle.Turtle()
+food.shape("square")
+food.color("red")
+food.shapesize(food_size / 20)
+food.penup()
+ 
+ 
+screen.listen()
+screen.onkey(go_up, "Up")
+screen.onkey(go_right, "Right")
+screen.onkey(go_down, "Down")
+screen.onkey(go_left, "Left")
+ 
+ 
+reset()
+turtle.done()
